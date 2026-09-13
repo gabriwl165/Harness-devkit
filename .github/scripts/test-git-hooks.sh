@@ -100,6 +100,15 @@ expect_says() {     # expect_says <name> <hook> <fixture-dir> <yes|no> <substrin
     fi
 }
 
+expect_not_says() { # expect_not_says <name> <hook> <fixture-dir> <substring>
+    local name="$1" hook="$2" dir="$3" needle="$4" out
+    out="$(run_hook "$hook" "$dir")"
+    case "$out" in
+        *"$needle"*) echo "FAIL: $name — unexpected '$needle' present"; fail=1 ;;
+        *) pass=$((pass + 1)) ;;
+    esac
+}
+
 # ── Python routing and exact command contract ────────────────────────────────
 d="$(fixture python)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
 expect_routed "python pre-commit format" pre-commit "$d" ruff 0 "format --check ."
@@ -110,8 +119,12 @@ expect_routed "python pre-push audit" pre-push "$d" pip-audit 0 ""
 d="$(fixture python-failure)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
 printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/ruff"; chmod +x "$d/.stub-bin/ruff"
 expect_exit "python pre-commit failure blocks" pre-commit "$d" 1
+expect_not_says "python pre-commit failure has no success sentinel" pre-commit "$d" "✓ pre-commit passed"
 d="$(fixture non-python)"; printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/ruff"; chmod +x "$d/.stub-bin/ruff"
 expect_exit "non-python skips python gates" pre-commit "$d" 0
+expect_absent "non-Python pre-commit invoked ruff" "$d/argv-ruff"
+expect_absent "non-Python pre-commit invoked mypy" "$d/argv-mypy"
+expect_says "non-Python pre-commit reports success" pre-commit "$d" yes "✓ pre-commit passed"
 d="$(fixture non-python-push)"
 printf '#!/bin/sh\nprintf '"'"'called'"'"' > "%s/pytest-called"\nexit 1\n' "$d" > "$d/.stub-bin/pytest"
 printf '#!/bin/sh\nprintf '"'"'called'"'"' > "%s/pip-audit-called"\nexit 1\n' "$d" > "$d/.stub-bin/pip-audit"
@@ -119,15 +132,21 @@ chmod +x "$d/.stub-bin/pytest" "$d/.stub-bin/pip-audit"
 expect_exit "non-python skips python pre-push gates" pre-push "$d" 0
 expect_absent "non-Python pre-push invoked pytest" "$d/pytest-called"
 expect_absent "non-Python pre-push invoked pip-audit" "$d/pip-audit-called"
+expect_absent "non-Python pre-push invoked ruff" "$d/argv-ruff"
+expect_absent "non-Python pre-push invoked mypy" "$d/argv-mypy"
+expect_says "non-Python pre-push reports success" pre-push "$d" yes "✓ pre-push gates passed"
 d="$(fixture python-test-failure)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
 printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/pytest"; chmod +x "$d/.stub-bin/pytest"
 expect_exit "python test failure blocks" pre-push "$d" 1
+expect_not_says "python test failure has no success sentinel" pre-push "$d" "✓ pre-push gates passed"
 d="$(fixture python-audit-failure)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
 printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/pip-audit"; chmod +x "$d/.stub-bin/pip-audit"
 expect_exit "python audit failure blocks" pre-push "$d" 1
+expect_not_says "python audit failure has no success sentinel" pre-push "$d" "✓ pre-push gates passed"
 d="$(fixture python-coverage-low)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
 printf '#!/bin/sh\ncase "$*" in *--cov-fail-under=85*) exit 1;; esac\nexit 0\n' > "$d/.stub-bin/pytest"; chmod +x "$d/.stub-bin/pytest"
 expect_exit "python coverage below floor blocks" pre-push "$d" 1
+expect_not_says "python low coverage has no success sentinel" pre-push "$d" "✓ pre-push gates passed"
 d="$(fixture python-coverage-floor)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
 printf '#!/bin/sh\ncase "$*" in *--cov-fail-under=85*) exit 0;; esac\nexit 1\n' > "$d/.stub-bin/pytest"; chmod +x "$d/.stub-bin/pytest"
 expect_exit "python coverage floor is inclusive" pre-push "$d" 0

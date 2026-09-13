@@ -4,8 +4,9 @@
 **Source:** `feat/python-harness-contract`  
 **Base:** `main`  
 **Freeze date:** 2026-09-13  
-**Status:** frozen durable contract; validation owner is the parent orchestrator. The independent
-oracle gate runs after the forward merges.
+**Status:** frozen durable contract, preserved unchanged for all future remediation. This file now
+also records a recovered/post-implementation contract addendum; validation owner is the parent
+orchestrator. The independent oracle gate runs after the forward merges.
 
 ## Scope and non-goals
 
@@ -71,13 +72,31 @@ shellcheck --severity=error plugins/coding-pipeline/git-hooks/pre-commit plugins
 git diff --check
 ```
 
-## Falsification evidence observed during implementation
+## Recovered falsification record (post-implementation)
 
-This is local evidence from the implementation work, not raw logs, CI output, or a claim of a
-remote check. The hook fixture suite was exercised with the Python marker present and absent,
-failing Ruff/pytest/pip-audit stubs, the 84/85 boundary stubs, and a counted common-jscpd stub;
-the corresponding routing, failure, boundary, isolation, attribution, and once-only assertions
-were observed to fail when their covered hook path was temporarily removed or altered, then the
-implementation was restored. Existing non-Python routing cases remained in the same local fixture
-suite. Final merged-tree validation and the independent oracle gate are intentionally left to the
-parent orchestrator; this document does not claim those results.
+This addendum was added after the original implementation commits (`929d994`, `298a376`, and
+`7b0ca28`). It is **not** a contract frozen beforehand and must not replace or rewrite the frozen
+test table above. Only evidence present in the available conversation/history is recorded here;
+there are no raw test logs or CI results available in that evidence. Consequently, rows without
+an individually evidenced mutation remain explicitly pending rather than being inferred from the
+test source or commit summaries.
+
+| ID | Mutation | Exact failing command/assertion observed | Restoration / result |
+|---|---|---|---|
+| P1-01 | Removed `mypy .` from Python pre-commit. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python pre-commit types` (argv expected `.`). | Restored; `52 passed, exit=0`. |
+| P1-02 | Appended `|| true` to Python fast gates. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python pre-commit failure blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-03 | Changed Python pre-commit marker guard to unconditional `true`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: non-python skips python gates` (exited 1, expected 0). | Restored; `52 passed, exit=0`. |
+| P1-04 | Removed `--cov-fail-under=85` from pytest. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python pre-push tests` (argv `--cov`, expected exact threshold). | Restored; `52 passed, exit=0`. |
+| P1-05 | Appended `|| true` to pytest. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python test failure blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-06 | Changed threshold to `--cov-fail-under=84`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python coverage below floor blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-07 | Changed threshold to `--cov-fail-under=86`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python coverage floor is inclusive` (exited 1, expected 0). | Restored; `52 passed, exit=0`. |
+| P1-08 | Appended `|| true` to pip-audit. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python audit failure blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-09 | Replaced both attribution calls with `true`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: introduced duplication blocks the push` and `FAIL: Python duplication result missing`. | Restored; `52 passed, exit=0`. |
+| P1-10 | Not a mutation-falsification row; aggregate regression evidence only. | Pending: no aggregate validation output is available. | Pending: parent orchestrator owns execution and reporting. |
+
+### Limitations and ownership
+
+The implementation history shows the fixture assertions and intended mutations, but does not by
+itself prove that each mutation was applied, observed failing, and restored. This addendum therefore
+makes no such claim, makes no CI claim, and does not treat the implementation commits as
+falsification evidence. The parent orchestrator owns validation; Oracle re-review is required.
