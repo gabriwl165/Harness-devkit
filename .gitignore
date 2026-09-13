@@ -39,5 +39,7 @@ SKILLSPEC-REPORT.md
 __pycache__/
 *.pyc
 
-# Delivery planning docs (local working artifacts — not shipped)
-/docs/
+# Delivery planning docs are tracked; other docs remain local working artifacts.
+/docs/*
+!/docs/deliveries/
+!/docs/deliveries/**
