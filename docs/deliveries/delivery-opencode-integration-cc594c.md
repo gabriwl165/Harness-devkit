@@ -3,7 +3,7 @@
 Base: `74e964f`  
 Release branch: `release/opencode-integration-cc594c`  
 Worktree: `.worktrees/dlv-cc594c`  
-Status: PR2 implementation complete; parent orchestrator owns validation and PR sequencing.
+Status: PR3 implementation complete; parent orchestrator owns validation and PR sequencing.
 
 ## Codebase/reuse map
 
@@ -48,6 +48,8 @@ Status: PR2 implementation complete; parent orchestrator owns validation and PR 
 3. **S3 — OpenCode acceptance evidence (PR1)**: add exactly OC-01–OC-07 executable tests and falsification record; OC-08–OC-14 remain documented rows for the series.
 
 PR2 additions use OC-15–OC-18: explicit per-persona permissions; schema-only template; exact thin canonical command wrappers; and additive unmanaged command/config preservation. OC-08–OC-11 remain the original frozen PR1 rows and are executed unchanged by the default suite.
+
+PR3 adds OC-19 for the hermetic CI step and machine-checkable README/AGENTS/adapter guidance claims. The full default suite executes OC-01–OC-19.
 
 ## Falsification evidence
 

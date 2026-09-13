@@ -226,10 +226,29 @@ oc_17_command_contract() {
 oc_18_additive_files() {
     oc_11_preserve_opencode_user_files
 }
+oc_19_ci_docs_contract() {
+    ci="$ROOT/.github/workflows/ci.yml"
+    readme="$ROOT/README.md"
+    agents="$ROOT/AGENTS.md"
+    adapter="$ROOT/plugins/coding-pipeline/opencode/harness-adapter.md"
+    assert_contains "$ci" 'name: OpenCode adapter tests'
+    assert_contains "$ci" 'run: bash .github/scripts/test-opencode-install.sh'
+    assert_contains "$readme" 'bash plugins/coding-pipeline/scripts/install-opencode.sh'
+    home_marker='~'
+    assert_contains "$readme" "$home_marker/.agents/skills/"
+    assert_contains "$readme" "$home_marker/.config/opencode/agents/"
+    assert_contains "$readme" 'Restart OpenCode after installation'
+    assert_contains "$readme" 'stacked-PR semantics'
+    assert_contains "$agents" 'OpenCode'
+    assert_contains "$agents" 'harness-adapter.md'
+    assert_contains "$adapter" 'scripts/install-opencode.sh'
+    assert_contains "$adapter" 'test-opencode-install.sh'
+    assert_contains "$adapter" 'stacked-PR semantics'
+}
 
 selected="${1:-all}"
 case "$selected" in
-    all) oc_01_locations; oc_02_exclusions; oc_03_preservation; oc_04_idempotency; oc_05_persona_coverage; oc_06_coder_composition; oc_07_parseability; oc_08_locations_default; oc_09_locations_override; oc_10_nested_references; oc_11_custom_agent; oc_15_permission_contract; oc_16_config_contract; oc_17_command_contract; oc_18_additive_files ;;
+    all) oc_01_locations; oc_02_exclusions; oc_03_preservation; oc_04_idempotency; oc_05_persona_coverage; oc_06_coder_composition; oc_07_parseability; oc_08_locations_default; oc_09_locations_override; oc_10_nested_references; oc_11_custom_agent; oc_15_permission_contract; oc_16_config_contract; oc_17_command_contract; oc_18_additive_files; oc_19_ci_docs_contract ;;
     OC-01) oc_01_locations ;;
     OC-02) install_fixture; oc_02_exclusions ;;
     OC-03) install_fixture; oc_03_preservation ;;
@@ -245,6 +264,7 @@ case "$selected" in
     OC-16) install_fixture; oc_16_config_contract ;;
     OC-17) install_fixture; oc_17_command_contract ;;
     OC-18) install_fixture; oc_18_additive_files ;;
-    *) printf 'Usage: %s [OC-01..OC-11|OC-15..OC-18]\n' "$0" >&2; exit 2 ;;
+    OC-19) oc_19_ci_docs_contract ;;
+    *) printf 'Usage: %s [OC-01..OC-11|OC-15..OC-19]\n' "$0" >&2; exit 2 ;;
 esac
-printf 'OC-01–OC-18 passed\n'
+printf 'OC-01–OC-19 passed\n'

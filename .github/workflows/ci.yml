@@ -91,3 +91,6 @@ jobs:
         # The settings merge edits a file holding the operator's permissions and
         # model config; a bad merge destroys work that is not recoverable from git.
         run: bash .github/scripts/test-install.sh
+      - name: OpenCode adapter tests
+        # Uses temporary destinations and committed fixtures only; no live schema or network access.
+        run: bash .github/scripts/test-opencode-install.sh

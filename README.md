@@ -298,6 +298,37 @@ but pipeline **sequencing** — which persona runs when, reading handoff signals
 `CODER DONE` — hasn't been exercised end-to-end in a live Codex session yet. See
 `plugins/coding-pipeline/codex/harness-adapter.md` for the vocabulary mapping and current gaps.
 
+### OpenCode
+
+Install the OpenCode adapter globally for the current user (Linux/macOS):
+
+```bash
+bash plugins/coding-pipeline/scripts/install-opencode.sh
+```
+
+The default destinations are `~/.agents/skills/` for native skills and
+`~/.config/opencode/agents/` for generated agents. The installer also adds the curated
+`task`, `multi-agent`, and `quality-gate` command wrappers under
+`~/.config/opencode/commands/`, and copies the schema-only contract to the non-active
+`~/.config/opencode/opencode.template.json`. Generated agents use explicit least-privilege
+OpenCode `permission:` frontmatter; the matrix is documented in
+`plugins/coding-pipeline/opencode/harness-adapter.md`.
+
+For tests, packaging, or a project-scoped destination, override both roots explicitly:
+
+```bash
+bash plugins/coding-pipeline/scripts/install-opencode.sh \
+  --agents-home "$PWD/.agents" \
+  --opencode-config-dir "$PWD/.opencode"
+```
+
+Re-running is safe: managed files are refreshed, while unrelated skills, agents, commands, and
+active config are preserved. Restart OpenCode after installation so it rediscovers skills, agents,
+and commands. The adapter's generated agent/config behavior is covered by hermetic tests, but the
+full pipeline has not been validated end-to-end in a live OpenCode session. OpenCode does not
+provide this repository's stacked-PR semantics; worktrees, sequential PRs, and delivery branches
+remain repository/pipeline behavior. See `plugins/coding-pipeline/opencode/harness-adapter.md`.
+
 ---
 
 ## Plugin Structure
