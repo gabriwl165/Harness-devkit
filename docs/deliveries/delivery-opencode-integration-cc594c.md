@@ -3,7 +3,7 @@
 Base: `74e964f`  
 Release branch: `release/opencode-integration-cc594c`  
 Worktree: `.worktrees/dlv-cc594c`  
-Status: PR1 implementation complete; parent orchestrator owns validation and PR sequencing.
+Status: PR2 implementation complete; parent orchestrator owns validation and PR sequencing.
 
 ## Codebase/reuse map
 
@@ -19,7 +19,7 @@ Status: PR1 implementation complete; parent orchestrator owns validation and PR 
 - AC2: installation is additive/idempotent, preserves unrelated files, and copies only `SKILL.md` plus complete `references/` trees.
 - AC3: generated files are OpenCode Markdown with `description` and `mode: subagent`, preserving persona descriptions and prompt bodies without Claude tools frontmatter.
 - AC4: every supported non-standalone persona is generated; backend/frontend coder output is core plus exactly one overlay.
-- AC5: PR1 emits no permission mapping; permission work is explicitly deferred to PR2.
+- AC5: PR2 emits explicit least-privilege `permission` mappings for every generated persona; permissions use only supported OpenCode actions.
 - AC6: Linux/macOS Bash scripts run without dependencies beyond standard shell utilities.
 
 ## Frozen test table (complete OC-01–OC-14)
@@ -47,7 +47,7 @@ Status: PR1 implementation complete; parent orchestrator owns validation and PR 
 2. **S2 — OpenCode persona generator (PR1)**: emit parseable Markdown and composed coder variants, with permissions pending PR2.
 3. **S3 — OpenCode acceptance evidence (PR1)**: add exactly OC-01–OC-07 executable tests and falsification record; OC-08–OC-14 remain documented rows for the series.
 
-Permission mapping is **pending PR2** and is intentionally absent from generated artifacts.
+PR2 additions use OC-15–OC-18: explicit per-persona permissions; schema-only template; exact thin canonical command wrappers; and additive unmanaged command/config preservation. OC-08–OC-11 remain the original frozen PR1 rows and are executed unchanged by the default suite.
 
 ## Falsification evidence
 

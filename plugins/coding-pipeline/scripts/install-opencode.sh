@@ -39,5 +39,15 @@ for skill_dir in "$PLUGINS"/*/skills/*/; do
 done
 
 bash "$SCRIPT_DIR/generate-opencode-agents.sh" --output-dir "$OPENCODE_DIR/agents"
+if [ -d "$SCRIPT_DIR/../opencode/commands" ]; then
+    mkdir -p "$OPENCODE_DIR/commands"
+    for command_file in "$SCRIPT_DIR/../opencode/commands"/*.md; do
+        [ -f "$command_file" ] || continue
+        cp "$command_file" "$OPENCODE_DIR/commands/"
+    done
+fi
+if [ -f "$SCRIPT_DIR/../opencode/opencode.json" ]; then
+    cp "$SCRIPT_DIR/../opencode/opencode.json" "$OPENCODE_DIR/opencode.template.json"
+fi
 printf 'Installed %s skills to %s/skills and OpenCode agents to %s/agents.\n' \
     "$skill_count" "$AGENTS_HOME_TARGET" "$OPENCODE_DIR"
