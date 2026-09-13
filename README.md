@@ -871,9 +871,9 @@ Spec is the source of truth — code follows spec, never the reverse.
 | Lint | `go vet` + `golangci-lint` (0) | `eslint --max-warnings 0` | `ruff check .` | `eslint` (react-hooks + a11y) | `flutter analyze` | `detekt` + `ktlint` |
 | Types | — | `tsc --noEmit` | `mypy .` | `tsc --noEmit` | — | — |
 | Coverage | ≥ 85% | ≥ 85% | ≥ 85% | ≥ 85% | ≥ 80% | ≥ 85% |
-| Race | `go test -race` | — | — | — | — |
+| Race | `go test -race` | — | — | — | — | — |
 | Vuln | `govulncheck` | `npm audit` | `pip-audit` | `npm audit` | — | — |
-| Spec lint | `spectral lint` | `spectral lint` | — | — | — |
+| Spec lint | `spectral lint` | `spectral lint` | — | — | — | — |
 
 ### Security
 - OWASP Web Top 10 (2025) enforced at Reviewer + Verdict stages
