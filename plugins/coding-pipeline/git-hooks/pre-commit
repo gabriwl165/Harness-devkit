@@ -35,6 +35,16 @@ if [ -f go.mod ]; then
     fi
 fi
 
+# Python (a root pyproject.toml is the explicit project marker)
+if [ -f pyproject.toml ]; then
+    echo "→ Python: format"
+    ruff format --check .
+    echo "→ Python: lint"
+    ruff check .
+    echo "→ Python: type check"
+    mypy .
+fi
+
 # Next.js (check before plain TS to use next lint instead of plain eslint)
 if [ -f next.config.js ] || [ -f next.config.ts ] || [ -f next.config.mjs ]; then
     echo "→ Next.js: type check"
