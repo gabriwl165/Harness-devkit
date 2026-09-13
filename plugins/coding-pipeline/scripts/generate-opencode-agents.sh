@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Generate parseable OpenCode Markdown agents from the pipeline personas.
-# PR1 deliberately leaves permission mapping to PR2; no permissions are emitted.
+# OpenCode permissions are explicit and deny-by-default; this mapping is the PR2 contract.
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,7 +24,7 @@ body_of() {
 }
 
 write_agent() {
-    local output_name="$1" core="$2" overlay="${3:-}" description body
+    local output_name="$1" core="$2" overlay="${3:-}" description body permission
     description="$(frontmatter_field "$core" description)"
     body="$(body_of "$core")"
     if [ -n "$overlay" ]; then
@@ -32,14 +32,154 @@ write_agent() {
 
 $(body_of "$overlay")"
     fi
-    # Description and mode are the only required OpenCode agent frontmatter.
+    permission="$(permission_for "$output_name")"
     {
         printf '%s\n' '---'
         printf 'description: %s\n' "$description"
         printf 'mode: subagent\n'
+        printf '%s\n' 'permission:'
+        printf '%s\n' "$permission"
         printf '%s\n\n' '---'
         printf '%s\n' "$body"
     } > "$TARGET/$output_name.md"
+}
+
+permission_for() {
+    case "$1" in
+        coder-backend|coder-frontend|devops|tuner)
+            cat <<'PERMISSIONS'
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  list: allow
+  bash: ask
+  task: deny
+  external_directory: deny
+  todowrite: allow
+  question: allow
+  webfetch: allow
+  websearch: deny
+  lsp: allow
+  doom_loop: deny
+  skill: allow
+PERMISSIONS
+            ;;
+        bug-investigator)
+            cat <<'PERMISSIONS'
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  list: allow
+  bash: ask
+  task: deny
+  external_directory: deny
+  todowrite: allow
+  question: allow
+  webfetch: allow
+  websearch: deny
+  lsp: allow
+  doom_loop: deny
+  skill: allow
+PERMISSIONS
+            ;;
+        analyst)
+            cat <<'PERMISSIONS'
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  list: allow
+  bash: deny
+  task: deny
+  external_directory: deny
+  todowrite: allow
+  question: allow
+  webfetch: deny
+  websearch: deny
+  lsp: deny
+  doom_loop: deny
+  skill: allow
+PERMISSIONS
+            ;;
+        architect|pm|scrum-master)
+            cat <<'PERMISSIONS'
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  list: allow
+  bash: deny
+  task: ask
+  external_directory: deny
+  todowrite: allow
+  question: allow
+  webfetch: allow
+  websearch: deny
+  lsp: deny
+  doom_loop: deny
+  skill: allow
+PERMISSIONS
+            ;;
+        plan-reviewer)
+            cat <<'PERMISSIONS'
+  read: allow
+  edit: deny
+  glob: allow
+  grep: allow
+  list: allow
+  bash: deny
+  task: deny
+  external_directory: deny
+  todowrite: deny
+  question: allow
+  webfetch: allow
+  websearch: deny
+  lsp: deny
+  doom_loop: deny
+  skill: allow
+PERMISSIONS
+            ;;
+        rote-adapter|rote-analytics|rote-datadog|rote-github)
+            cat <<'PERMISSIONS'
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  list: allow
+  bash: ask
+  task: ask
+  external_directory: allow
+  todowrite: allow
+  question: allow
+  webfetch: allow
+  websearch: allow
+  lsp: allow
+  doom_loop: deny
+  skill: allow
+PERMISSIONS
+            ;;
+        *)
+            cat <<'PERMISSIONS'
+  read: allow
+  edit: deny
+  glob: allow
+  grep: allow
+  list: allow
+  bash: deny
+  task: deny
+  external_directory: deny
+  todowrite: deny
+  question: allow
+  webfetch: allow
+  websearch: deny
+  lsp: deny
+  doom_loop: deny
+  skill: allow
+PERMISSIONS
+            ;;
+    esac
 }
 
 for persona in analyst architect bug-investigator devops plan-reviewer pm qa reviewer \
@@ -48,5 +188,5 @@ for persona in analyst architect bug-investigator devops plan-reviewer pm qa rev
 done
 write_agent coder-backend "$AGENTS_DIR/coder.md" "$AGENTS_DIR/coder-backend.md"
 write_agent coder-frontend "$AGENTS_DIR/coder.md" "$AGENTS_DIR/coder-frontend.md"
-printf 'Generated %s OpenCode agents in %s (permissions pending PR2).\n' \
+printf 'Generated %s OpenCode agents in %s with explicit permissions.\n' \
     "$(find "$TARGET" -maxdepth 1 -type f -name '*.md' | wc -l | tr -d ' ')" "$TARGET"
