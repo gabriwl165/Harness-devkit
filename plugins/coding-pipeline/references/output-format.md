@@ -85,6 +85,7 @@
 | TypeScript | `.ts` | `.test.ts` |
 | PHP | `.php` | `Test.php` |
 | Rust | `.rs` | `_test.rs` *(in `#[cfg(test)]` module)* |
+| Python | `.py` | `test_*.py` / `*_test.py` *(pytest)* |
 | Kotlin | `.kt` | `Test.kt` *(JUnit5)* |
 | Flutter/Dart | `.dart` | `_test.dart` |
 | HTMX | `.html` + server | Playwright `.spec.ts` |

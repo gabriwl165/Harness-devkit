@@ -183,6 +183,7 @@ Coverage mandates (must pass before handoff — 85% is the aspirational target f
 | Go | ≥ 85% | ≥ 85% | `go test -coverprofile=coverage.out -covermode=atomic ./...` + `go test -race ./...` |
 | Java | ≥ 85% | ≥ 85% | `mvn verify` or `./gradlew test jacocoTestReport` (JaCoCo) |
 | JS/TS | ≥ 85% | ≥ 85% | `jest --coverage` with `coverageThreshold` in jest.config |
+| Python | ≥ 85% | ≥ 85% | `pytest --cov --cov-fail-under=85` |
 | PHP | ≥ 80% | ≥ 80% | `phpunit --coverage-text` enforced in `phpunit.xml` |
 | Rust | ≥ 85% | ≥ 85% | `cargo tarpaulin --out Xml` or `cargo llvm-cov --summary-only` |
 | Flutter | ≥ 80% | ≥ 80% | `flutter test --coverage && lcov --summary coverage/lcov.info` |
@@ -205,6 +206,7 @@ Key gates per language (all prefixed with `rtk` — hook intercepts automaticall
 - **All stacks, before the per-language gates**: `rtk jscpd . --threshold 3 --min-lines 8 --reporters console` — Gate PASS = ≤ 3%. Duplication is language-agnostic and invisible to every gate below it: a copy-pasted block lints clean, types clean, and covers clean.
 - **Go**: `rtk golangci-lint run` · `rtk go vet ./...` · `rtk go test -race ./...` · `rtk govulncheck ./...`
 - **JS/TS/React**: `rtk lint` · `rtk tsc --noEmit` · `rtk prettier --check .` · `rtk next build` (Next.js) / `rtk vite build` or `rtk npm run build` (React SPA) · `rtk npm audit --audit-level=high`
+- **Python**: `rtk ruff format --check .` · `rtk ruff check .` · `rtk mypy .` · `rtk pytest --cov --cov-fail-under=85` · `rtk pip-audit`
 - **Java**: `rtk mvn spotbugs:check` · `rtk mvn checkstyle:check` · `rtk mvn dependency-check:check`
 - **PHP**: `rtk vendor/bin/phpstan analyse --level 8` · `rtk vendor/bin/phpcs` · `rtk composer audit`
 - **Rust**: `rtk cargo clippy -- -D warnings` · `rtk cargo fmt --check` · `rtk cargo audit`
@@ -264,6 +266,7 @@ Start file with:
 | Java | JUnit 5 + Mockito | `@ExtendWith(MockitoExtension.class)` · `@Mock` + `@InjectMocks` · `when(...).thenReturn(...)` · `verify(...)` · `@SpringBootTest`+Testcontainers for integration |
 | PHP | PHPUnit + Mockery | `Mockery::mock(Interface::class)->shouldReceive('method')->andReturn(val)` · `Mockery::close()` in `tearDown` · `RefreshDatabase` for Laravel integration |
 | Go | testify + fake structs | Interface in consumer/test pkg → fake struct impl · `testify/mock` for complex · `//go:build integration` tag |
+| Python | pytest | `test_*.py` / `*_test.py` · `@pytest.fixture` · `@pytest.mark.parametrize` · observable assertions, not mock-call-only |
 | Rust | mockall | `#[automock]` on traits · `MockTrait::new()` + `.expect_method()` · `#[cfg(test)]` modules |
 
 ## Security Test Cases *(required for epics with external I/O, auth, or user input)*
@@ -307,4 +310,5 @@ Expected test-file shape (what a compliant suite from Amelia looks like):
 - Java: JUnit 5 `@DisplayName` · Mockito · AssertJ
 - PHP: PHPUnit 10+ · Mockery · `@dataProvider` for table-driven
 - JS/TS: Jest `describe`/`it` · `@testing-library` for UI
+- Python: pytest `test_*.py` / `*_test.py` · fixtures · `@pytest.mark.parametrize` · observable assertions
 - Rust: `#[cfg(test)]` modules · `mockall` `#[automock]` · `cargo test` · `assert!` / `assert_eq!`

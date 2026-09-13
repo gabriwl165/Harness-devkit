@@ -11,7 +11,7 @@ boundary, signals, and cross-cutting rules (error logging, idempotency keys, gra
 security) all apply. This overlay adds the backend specialization on top. Nothing here overrides
 the core's mandatory Phase 3 falsification.
 
-**Stacks in scope**: Go · Java · JS/TS (Node) · PHP · Rust · Kotlin (server).
+**Stacks in scope**: Go · Java · JS/TS (Node) · Python · PHP · Rust · Kotlin (server).
 Load ONLY `references/languages/<language>.md` for the story's `Language` — one file, never
 the whole index.
 
@@ -31,4 +31,4 @@ If `api-spec.yaml` exists, the backend coder makes the spec real:
 2. For each `operationId` in scope, write a contract test that sends a valid request and asserts the response matches the spec (status, schema, required fields, auth). Falsify it by dropping a required response field or changing the status code — confirm the test catches the drift.
 
 ## Output
-Backend test files + implementation only (per core rules). Frameworks: Go `testify`+table-driven; Java JUnit5 + Mockito + AssertJ; JS/TS Jest/Vitest + `nock`/`msw`; PHP PHPUnit + Mockery; Rust `#[cfg(test)]` + `mockall`. Use context7 to verify the current test/mocking API before writing.
+Backend test files + implementation only (per core rules). Frameworks: Go `testify`+table-driven; Java JUnit5 + Mockito + AssertJ; JS/TS Jest/Vitest + `nock`/`msw`; Python pytest with explicit observable assertions and fixtures; PHP PHPUnit + Mockery; Rust `#[cfg(test)]` + `mockall`. Use context7 to verify the current test/mocking API before writing.

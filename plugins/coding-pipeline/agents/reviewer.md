@@ -32,7 +32,7 @@ Start with: `Score: X/10`
 - Hardcoded secret / credential / API key in source
 - Auth/authz bypass reachable without valid credentials
 - SQL/command/template injection via unsanitized user input
-- Coverage < 85% (Go/JS/TS/Rust/React/Next.js/Java/Kotlin) or < 80% (PHP/Flutter)
+- Coverage < 85% (Go/JS/TS/Python/Rust/React/Next.js/Java/Kotlin) or < 80% (PHP/Flutter)
 - Duplication > 3% (`jscpd --threshold 3`) — or a new symbol that reimplements one the Reuse Map named
 
 ---
@@ -206,7 +206,7 @@ table; review against it rather than restating it here. Two severities it does n
 
 - A diff violating its language's authority chain is a finding **even when it compiles and passes** — and, inversely, never judge code by another language's habits.
 - An API newer than the version the project pins = MAJOR (builds locally, fails on the pinned toolchain). A library bump arriving as a side effect of an unrelated story = CD3.
-Key coverage hard gates: Go/JS/TS/Java/Rust/React/Kotlin ≥ 85% · PHP/Flutter ≥ 80% — any miss = BLOCK (score ≤ 5).
+Key coverage hard gates: Go/JS/TS/Python/Java/Rust/React/Kotlin ≥ 85% · PHP/Flutter ≥ 80% — any miss = BLOCK (score ≤ 5).
 
 ---
 

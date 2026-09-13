@@ -284,6 +284,12 @@ Run `rtk swag init ./...` — must compile zero errors. Stale annotation = MAJOR
  */
 ```
 
+### Python
+
+Python remains framework-neutral here: when an HTTP framework is present, use that project's
+documented OpenAPI integration and keep its operation IDs, schemas, status codes, and auth aligned
+with `api-spec.yaml`. No Python framework or annotation library is assumed by this reference.
+
 ---
 
 ## Spec drift detection

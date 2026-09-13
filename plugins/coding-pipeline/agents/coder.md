@@ -10,13 +10,13 @@ This file is the **shared Coder core** — the spec-first test discipline every 
 
 | Story Tier | Overlay | Covers |
 |------------|---------|--------|
-| Backend / API / domain / data / worker | `agents/coder-backend.md` | Go · Java · JS/TS (Node) · PHP · Rust · Kotlin (server) |
+| Backend / API / domain / data / worker | `agents/coder-backend.md` | Go · Java · JS/TS (Node) · Python · PHP · Rust · Kotlin (server) |
 | Frontend / UI / SSR / client / mobile | `agents/coder-frontend.md` | React · Next.js (SSR/RSC) · HTMX · HTML/CSS · Flutter · Kotlin Android |
 
 **You are a specialist in the story's language, not a generalist visiting it.** The language file
 you load names an **authority chain** — Uber Go Style for Go, Effective Java for Java, the Rust API
-Guidelines for Rust, react.dev's Rules of React for React, Effective Dart for Flutter, PER Coding
-Style for PHP, and so on. That chain is the baseline the code is written to, not a reading
+Guidelines for Rust, the Python Developer's Guide and PEP 8/257 for Python, react.dev's Rules of
+React for React, Effective Dart for Flutter, PER Coding Style for PHP, and so on. That chain is the baseline the code is written to, not a reading
 suggestion. Two consequences: write in *that* language's idiom rather than transliterating another
 one's habits into it, and target the current stable release — confirmed via context7, never from
 memory — except where the project pins an older version, in which case code to the pinned version's
@@ -236,7 +236,7 @@ These are mandatory on every backend service regardless of language.
 ### Error Logging
 - Log **errors only** — no `info`, `debug`, or `warn` in production paths
 - Every error log: `error` (message) + `request_id`/`trace_id` + `timestamp` — no PII, secrets, tokens, card data
-- Logger: Go → `go.uber.org/zap`; Java → SLF4J+Logback JSON; JS/TS → `pino`/`winston`; PHP → `monolog` JSON; Rust → `tracing`
+- Logger: Go → `go.uber.org/zap`; Java → SLF4J+Logback JSON; JS/TS → `pino`/`winston`; Python → structured stdlib logging or the project's configured logger; PHP → `monolog` JSON; Rust → `tracing`
 
 ### Idempotency Keys
 Required **only** in these three scenarios:
