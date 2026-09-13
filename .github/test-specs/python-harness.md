@@ -83,15 +83,15 @@ test source or commit summaries.
 
 | ID | Mutation | Exact failing command/assertion observed | Restoration / result |
 |---|---|---|---|
-| P1-01 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-02 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-03 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-04 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-05 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-06 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-07 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-08 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
-| P1-09 | Pending: no individually evidenced mutation is available. | Pending: no exact failing command/assertion is available. | Pending: restoration/result is not evidenced. |
+| P1-01 | Removed `mypy .` from Python pre-commit. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python pre-commit types` (argv expected `.`). | Restored; `52 passed, exit=0`. |
+| P1-02 | Appended `|| true` to Python fast gates. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python pre-commit failure blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-03 | Changed Python pre-commit marker guard to unconditional `true`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: non-python skips python gates` (exited 1, expected 0). | Restored; `52 passed, exit=0`. |
+| P1-04 | Removed `--cov-fail-under=85` from pytest. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python pre-push tests` (argv `--cov`, expected exact threshold). | Restored; `52 passed, exit=0`. |
+| P1-05 | Appended `|| true` to pytest. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python test failure blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-06 | Changed threshold to `--cov-fail-under=84`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python coverage below floor blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-07 | Changed threshold to `--cov-fail-under=86`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python coverage floor is inclusive` (exited 1, expected 0). | Restored; `52 passed, exit=0`. |
+| P1-08 | Appended `|| true` to pip-audit. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: python audit failure blocks` (exited 0, expected 1). | Restored; `52 passed, exit=0`. |
+| P1-09 | Replaced both attribution calls with `true`. | `bash .github/scripts/test-git-hooks.sh`: `FAIL: introduced duplication blocks the push` and `FAIL: Python duplication result missing`. | Restored; `52 passed, exit=0`. |
 | P1-10 | Not a mutation-falsification row; aggregate regression evidence only. | Pending: no aggregate validation output is available. | Pending: parent orchestrator owns execution and reporting. |
 
 ### Limitations and ownership
