@@ -34,3 +34,10 @@ Two conventions there are easy to get wrong and worth calling out up front:
   (pipeline *sequencing* is not yet validated in a live Codex session).
 - **Git hooks** (`plugins/coding-pipeline/git-hooks/`) are plain POSIX shell and work under any
   harness or none at all — install via `bash plugins/coding-pipeline/scripts/install-git-hooks.sh`.
+- **OpenCode** uses native `.agents/skills` discovery for skills and generated Markdown agents plus
+  curated commands under the user-global `~/.config/opencode/{agents,commands}` locations. Install
+  with `bash plugins/coding-pipeline/scripts/install-opencode.sh`; it is additive and idempotent.
+  The generated permission matrix, schema template, command wrappers, and current limitations are
+  documented in `plugins/coding-pipeline/opencode/harness-adapter.md`. OpenCode agent generation
+  and configuration are validated here, but live end-to-end pipeline sequencing is not; delivery
+  worktrees and sequential PR semantics remain repository pipeline behavior, not OpenCode features.

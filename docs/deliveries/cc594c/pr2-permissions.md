@@ -25,3 +25,7 @@ OC-08–OC-11 are the original frozen rows recovered from the committed PR1 cont
 | OC-18 | Removed unmanaged command using `rm -f "$OPENCODE_DIR/commands/custom.md"` after copy | `bash .github/scripts/test-opencode-install.sh OC-18`; `unmanaged OpenCode command changed` | Removed mutation; OC-18 passed |
 
 Final selected reruns were green, followed by the full OC-01–OC-18 suite.
+
+## PR3 falsification evidence
+
+OC-19 was falsified after the docs/CI implementation. The CI assertion mutation changed `name: OpenCode adapter tests` to `name: Missing OpenCode adapter tests`; `bash .github/scripts/test-opencode-install.sh OC-19` failed with `not found: name: OpenCode adapter tests`. The exact step name was restored and OC-19 reran green. A README limitation assertion was also checked with a whole-line removal mutation (removing the restart guidance line); it failed on `not found: Restart OpenCode after installation`, was restored, and OC-19 reran green. The original OC-01–OC-18 suite then remained green.
