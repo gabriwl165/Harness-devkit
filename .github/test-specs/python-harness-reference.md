@@ -147,3 +147,122 @@ recorded as created by this invocation, rolling back earlier files if a later cr
   separate concurrent run invokes the unmodified shipped script eight times against one target and
   requires at least one loser with exactly one complete artifact set. Replacing production `ln`
   with `cp` was deliberately applied; the no-clobber race assertion failed, then `ln` was restored.
+
+## PR6 specification: Python quality-gate runner
+
+**Oracle plan:** ora-2  
+**Scope:** PR6 only  
+**Freeze date:** 2026-09-14  
+**Status:** frozen before implementation  
+**Validation owner:** parent orchestrator  
+**Evidence:** pending implementation, post-implementation tests, and mutation-based falsification.
+
+### Scope and non-goals
+
+PR6 adds a generated, project-owned standard-library `quality_gate.py` runner and the generated
+CI invocation for the Python Harness. The runner reads its configuration from the consumer's
+`pyproject.toml` and supports exactly these modes:
+
+```text
+python quality_gate.py fast
+python quality_gate.py full
+python quality_gate.py ci
+python quality_gate.py architecture
+```
+
+The contract is:
+
+- `fast` runs formatting, Ruff checks, and mypy; `full` runs the `fast` gates plus pytest with
+  branch coverage, Bandit, and pip-audit; `ci` runs the same complete gate set as `full`; and
+  `architecture` runs only explicitly declared architecture commands.
+- Source and test paths are explicit configuration values, and the coverage floor defaults to 85%
+  when not configured. No implicit source discovery or test discovery is permitted.
+- The only package runner is `uv`; every dependency-consuming command is invoked through
+  `uv run --frozen`. The lock validation sequence is fixed: resolve the configured lockfile path
+  (the repository's `uv.lock` by default), require it to be a regular non-symlink file, then run
+  `uv lock --check` before any gate or other `uv` command. A missing, symlinked, unreadable, or
+  stale lock fails before formatting, linting, type checking, tests, security checks, or declared
+  architecture commands. The runner never refreshes or writes the lockfile.
+- pip-audit is run against the locked environment, not an independently resolved requirements
+  file: `uv run --frozen pip-audit --local`, with no network/update option. The command therefore
+  audits packages installed in the project's frozen `uv` environment; its failure is a gate
+  failure.
+- Architecture commands are empty by default. Only commands explicitly declared in
+  `pyproject.toml` are run, in declaration order, without shell evaluation or command invention.
+- A subprocess failure stops execution immediately and preserves the exact subprocess exit status;
+  signal termination is reported as the corresponding non-zero status. The runner performs no
+  auto-fix, network/bootstrap/install side effect, or virtual-environment creation.
+- Generated CI first runs `uv sync --frozen --all-groups`, then invokes the same
+  `python quality_gate.py ci`. CI does not add a second or divergent gate definition.
+- Bootstrap does not modify a consumer `pyproject.toml` in place. Existing conflicting generated
+  configuration is refused with an actionable explanation; otherwise bootstrap emits only the
+  deterministic fragment permitted by the PR5 contract and explains that the consumer must merge
+  it manually. No service, Docker, Go, application, or governance behavior is included.
+
+PR6 does not add service generation, Docker/container files, Go tooling, governance workflows,
+framework selection, application/runtime code, dependency installation, lockfile generation,
+network access, auto-fixing, or mutation of a consumer's existing `pyproject.toml`.
+
+### Acceptance criteria
+
+- **AC-PR6-1 Generated ownership and wiring:** A successful bootstrap generates a deterministic,
+  project-owned standard-library `quality_gate.py` and the documented CI entrypoint; generated
+  files are wired, executable where applicable, and contain no machine-specific paths.
+- **AC-PR6-2 Modes:** Only `fast`, `full`, `ci`, and `architecture` are accepted; their gate sets
+  match the frozen mode contract, with `ci` equivalent to `full`.
+- **AC-PR6-3 Configuration:** Configuration comes from `pyproject.toml`, including explicit source
+  and test paths, coverage floor, lockfile path, and optional architecture commands; the coverage
+  default is 85% and malformed or unsupported configuration fails clearly before execution.
+- **AC-PR6-4 Locked execution:** Lock validation has the frozen ordering and rejects missing,
+  symlinked, unreadable, or stale locks before every gate. Dependency-consuming commands use only
+  `uv run --frozen`; pip-audit uses `--local` against that locked environment.
+- **AC-PR6-5 Exact gates:** The runner invokes Ruff format/check, mypy, pytest with branch coverage
+  and the configured threshold, Bandit, and pip-audit exactly as specified, without auto-fix.
+- **AC-PR6-6 Architecture allowlist:** Architecture mode runs no command by default and runs only
+  explicitly declared commands, in order, with safe argument handling and no shell interpolation.
+- **AC-PR6-7 Fail-fast status:** The first failing subprocess stops the run and the runner exits
+  with its exact status; no later gate is run.
+- **AC-PR6-8 No side effects:** Runner and bootstrap perform no network, bootstrap, installation,
+  lockfile-write, virtual-environment-create, auto-fix, or consumer-pyproject in-place mutation.
+- **AC-PR6-9 CI parity and boundaries:** Generated CI performs `uv sync --frozen --all-groups`
+  followed by `python quality_gate.py ci`, and PR6 emits no service, Docker, Go, or governance
+  behavior.
+- **AC-PR6-10 Conflict handling:** Bootstrap refuses conflicting existing configuration and gives
+  a clear manual-merge explanation, or emits the deterministic PR5-contract fragment without
+  modifying the consumer project file.
+
+### Frozen test table
+
+Each row is a post-implementation test contract. The precondition and observable result must be
+asserted through the generated project boundary, not by copying constants from the runner. Each
+mutation is applied alone, the named assertion must fail, and the implementation is restored.
+
+| ID / test | Preconditions | Observable result | Why it matters | AC | Falsified by |
+|---|---|---|---|---|---|
+| **P2-05 generated runner contract** | Bootstrap a clean consumer with valid `pyproject.toml` configuration and inspect generated files. | `quality_gate.py` is deterministic, standard-library-only, project-owned, wired, and supports exactly the four documented modes; no non-PR6 artifacts are generated. | A generated runner must be portable, reviewable, and owned by the project rather than hidden in the Harness. | AC-PR6-1, AC-PR6-2, AC-PR6-9 | Remove one mode, add a dependency import, make output nondeterministic, or generate a Docker/service artifact; mode, dependency, checksum, or inventory assertions fail. |
+| **P2-06 configuration and lock preflight** | Prepare projects covering explicit paths, omitted coverage floor, custom lock path, missing/symlink/unreadable lock, and stale lock; make gate executables observable fixtures. | Paths and configuration are read from `pyproject.toml`; omitted threshold is 85%; lock checks occur before any gate; missing, symlinked, unreadable, or stale locks fail non-zero without gate execution or lock writes. | Deterministic configuration and early lock rejection prevent running or trusting gates against an unverified dependency graph. | AC-PR6-3, AC-PR6-4 | Move `uv lock --check` after a gate, accept a symlink/missing lock, default to another threshold, or write the lock during validation; ordering, status, or filesystem assertions fail. |
+| **P2-07 modes, exact gates, audit target, and architecture allowlist** | Use recording `uv`/tool fixtures with a valid lock and configured source/test paths, threshold, and architecture commands; repeat with no architecture commands. | `fast` runs only format/check/mypy; `full` and `ci` run the exact full sequence including branch coverage, Bandit, and `uv run --frozen pip-audit --local`; architecture runs nothing by default and only declared commands in order. | Gate completeness, locked-environment auditing, and a deny-by-default architecture mode prevent silent omissions and arbitrary command execution. | AC-PR6-2, AC-PR6-5, AC-PR6-6 | Delete a gate, omit `--frozen`, replace `--local`, enable an undeclared command, or make default architecture discovery non-empty; the recorded argv/order assertions fail. |
+| **P2-08 fail-fast, CI parity, and safe bootstrap conflicts** | Give the first recorded gate a non-zero status; separately inspect generated CI and bootstrap against an existing conflicting consumer `pyproject.toml`. | The runner stops at the first failure and returns its exact status; CI orders `uv sync --frozen --all-groups` before `python quality_gate.py ci`; bootstrap refuses or emits only the deterministic fragment, never edits the consumer file, and explains manual merge. | Exact failure propagation and non-mutating integration make failures actionable and preserve consumer ownership. | AC-PR6-7, AC-PR6-8, AC-PR6-9, AC-PR6-10 | Continue after failure, normalize the status, reverse CI order, overwrite the consumer file, or silently accept a conflict; status/order/content/explanation assertions fail. |
+
+### Evidence record
+
+Evidence (exceptional Oracle final remediation): `.github/scripts/test-python-harness-runner.sh` covers
+P2-05 through P2-08 with hermetic uv argv recording and no network. P2-06 now records the
+complete custom-lock success path, the missing custom-lock path, and the regular unreadable-lock
+branch using an unprivileged `nobody` process when the host supports it; this macOS host cannot
+execute that account through `su` (explicit SKIP, status 1), so no chmod-only success is claimed.
+P2-07 uses separate complete logs for fast, full, and ci, compares exact ordered argv, proves
+ci==full, exercises the omitted-floor 85 default, configured floor, custom paths, and two
+architecture arrays with literal injection-safe argv. Rejection cases checksum `pyproject.toml`
+and lock targets before/after and assert no gate log. The unreadable regular-lock case captures
+both `su` streams and requires status 2 plus the exact `quality_gate: lockfile is missing,
+unreadable, or symlinked: unreadable.lock` diagnostic; setup/invocation failures are skipped only
+locally and fail under `CI=true`. Permission restoration is followed by a second checksum check.
+Bootstrap and runner suites are wired into
+`.github/workflows/ci.yml` on Ubuntu with `contents: read`; CI sets `CI=true`, making inability to
+execute the unprivileged unreadable-lock case a failure, while unsupported local hosts explicitly
+skip. Row-specific checksum and unreadable-branch mutations failed as intended before restoration.
+Runner, bootstrap, Phase1 hooks, `py_compile`, `bash -n`, ShellCheck, wiring validation, and
+`git diff --check` passed. Workflow syntax is represented by the repository's existing YAML
+workflow structure; no dedicated workflow validator is installed locally. Exceptional Oracle
+focused review is authorized by the user.

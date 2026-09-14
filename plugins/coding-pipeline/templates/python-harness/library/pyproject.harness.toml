@@ -1,0 +1,7 @@
+# Merge this deterministic fragment into pyproject.toml; bootstrap never edits it.
+[tool.harness.quality_gate]
+source_paths = ["src"]
+test_paths = ["tests"]
+coverage_floor = 85
+lockfile = "uv.lock"
+architecture_commands = []
