@@ -143,6 +143,14 @@ if [ -f go.mod ]; then
     fi
 fi
 
+# Python (a root pyproject.toml is the explicit project marker)
+if [ -f pyproject.toml ]; then
+    echo "→ Python: tests + coverage"
+    pytest --cov --cov-fail-under=85
+    echo "→ Python: dependency audit"
+    pip-audit
+fi
+
 # Next.js (check before plain TS)
 if [ -f next.config.js ] || [ -f next.config.ts ] || [ -f next.config.mjs ]; then
     echo "→ Next.js: build"

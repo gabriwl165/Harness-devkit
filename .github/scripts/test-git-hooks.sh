@@ -29,8 +29,10 @@ fixture() {
     bin="$dir/.stub-bin"
     mkdir -p "$bin"
     for t in cargo cargo-audit cargo-tarpaulin composer mvn npx npm flutter lcov dart go govulncheck \
+             ruff mypy pytest pip-audit \
              golangci-lint ktlint; do
-        printf '#!/bin/sh\nexit 0\n' > "$bin/$t"
+        printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/argv-%s"\nprintf "%%s %%s\\n" "%s" "$*"\nexit 0\n' \
+            "$dir" "$t" "$t" > "$bin/$t"
         chmod +x "$bin/$t"
     done
     printf '#!/bin/sh\nexit 0\n' > "$dir/gradlew"
@@ -61,6 +63,31 @@ expect_exit() {     # expect_exit <name> <hook> <fixture-dir> <want-exit>
     fi
 }
 
+expect_routed() {   # expect_routed <name> <hook> <fixture-dir> <tool> <want-exit> <argv>
+    local name="$1" hook="$2" dir="$3" tool="$4" want="$5" expected="$6"
+    local out got actual
+    out="$(run_hook "$hook" "$dir")"; got=$?
+    actual=""
+    [ -f "$dir/argv-$tool" ] && actual="$(cat "$dir/argv-$tool")"
+    if [ "$got" = "$want" ] && [ -f "$dir/argv-$tool" ] && grep -Fxq -- "$expected" "$dir/argv-$tool"; then
+        pass=$((pass + 1))
+    else
+        echo "FAIL: $name — status=$got (expected $want), argv='$actual' (expected '$expected'), output='$out'"
+        fail=1
+    fi
+}
+
+expect_absent() {   # expect_absent <name> <path>
+    local name="$1" path="$2" actual=""
+    [ -e "$path" ] && actual="present"
+    if [ -z "$actual" ]; then
+        pass=$((pass + 1))
+    else
+        echo "FAIL: $name — unexpected path '$path' exists"
+        fail=1
+    fi
+}
+
 expect_says() {     # expect_says <name> <hook> <fixture-dir> <yes|no> <substring>
     local name="$1" hook="$2" dir="$3" want="$4" needle="$5" out saw
     out="$(run_hook "$hook" "$dir")"
@@ -72,6 +99,57 @@ expect_says() {     # expect_says <name> <hook> <fixture-dir> <yes|no> <substrin
         fail=1
     fi
 }
+
+expect_not_says() { # expect_not_says <name> <hook> <fixture-dir> <substring>
+    local name="$1" hook="$2" dir="$3" needle="$4" out
+    out="$(run_hook "$hook" "$dir")"
+    case "$out" in
+        *"$needle"*) echo "FAIL: $name — unexpected '$needle' present"; fail=1 ;;
+        *) pass=$((pass + 1)) ;;
+    esac
+}
+
+# ── Python routing and exact command contract ────────────────────────────────
+d="$(fixture python)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
+expect_routed "python pre-commit format" pre-commit "$d" ruff 0 "format --check ."
+expect_routed "python pre-commit lint" pre-commit "$d" ruff 0 "check ."
+expect_routed "python pre-commit types" pre-commit "$d" mypy 0 "."
+expect_routed "python pre-push tests" pre-push "$d" pytest 0 "--cov --cov-fail-under=85"
+expect_routed "python pre-push audit" pre-push "$d" pip-audit 0 ""
+d="$(fixture python-failure)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
+printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/ruff"; chmod +x "$d/.stub-bin/ruff"
+expect_exit "python pre-commit failure blocks" pre-commit "$d" 1
+expect_not_says "python pre-commit failure has no success sentinel" pre-commit "$d" "✓ pre-commit passed"
+d="$(fixture non-python)"; printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/ruff"; chmod +x "$d/.stub-bin/ruff"
+expect_exit "non-python skips python gates" pre-commit "$d" 0
+expect_absent "non-Python pre-commit invoked ruff" "$d/argv-ruff"
+expect_absent "non-Python pre-commit invoked mypy" "$d/argv-mypy"
+expect_says "non-Python pre-commit reports success" pre-commit "$d" yes "✓ pre-commit passed"
+d="$(fixture non-python-push)"
+printf '#!/bin/sh\nprintf '"'"'called'"'"' > "%s/pytest-called"\nexit 1\n' "$d" > "$d/.stub-bin/pytest"
+printf '#!/bin/sh\nprintf '"'"'called'"'"' > "%s/pip-audit-called"\nexit 1\n' "$d" > "$d/.stub-bin/pip-audit"
+chmod +x "$d/.stub-bin/pytest" "$d/.stub-bin/pip-audit"
+expect_exit "non-python skips python pre-push gates" pre-push "$d" 0
+expect_absent "non-Python pre-push invoked pytest" "$d/pytest-called"
+expect_absent "non-Python pre-push invoked pip-audit" "$d/pip-audit-called"
+expect_absent "non-Python pre-push invoked ruff" "$d/argv-ruff"
+expect_absent "non-Python pre-push invoked mypy" "$d/argv-mypy"
+expect_says "non-Python pre-push reports success" pre-push "$d" yes "✓ pre-push gates passed"
+d="$(fixture python-test-failure)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
+printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/pytest"; chmod +x "$d/.stub-bin/pytest"
+expect_exit "python test failure blocks" pre-push "$d" 1
+expect_not_says "python test failure has no success sentinel" pre-push "$d" "✓ pre-push gates passed"
+d="$(fixture python-audit-failure)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
+printf '#!/bin/sh\nexit 1\n' > "$d/.stub-bin/pip-audit"; chmod +x "$d/.stub-bin/pip-audit"
+expect_exit "python audit failure blocks" pre-push "$d" 1
+expect_not_says "python audit failure has no success sentinel" pre-push "$d" "✓ pre-push gates passed"
+d="$(fixture python-coverage-low)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
+printf '#!/bin/sh\ncase "$*" in *--cov-fail-under=85*) exit 1;; esac\nexit 0\n' > "$d/.stub-bin/pytest"; chmod +x "$d/.stub-bin/pytest"
+expect_exit "python coverage below floor blocks" pre-push "$d" 1
+expect_not_says "python low coverage has no success sentinel" pre-push "$d" "✓ pre-push gates passed"
+d="$(fixture python-coverage-floor)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"
+printf '#!/bin/sh\ncase "$*" in *--cov-fail-under=85*) exit 0;; esac\nexit 1\n' > "$d/.stub-bin/pytest"; chmod +x "$d/.stub-bin/pytest"
+expect_exit "python coverage floor is inclusive" pre-push "$d" 0
 
 # ── Gradle routing: `android {}` may live in either DSL ──────────────────────
 # Checking only build.gradle sends a Kotlin-DSL Android project down the Java
@@ -216,15 +294,27 @@ json.dump({"statistics": {"total": {"lines": 200}},
                            "secondFile": {"name": "legacy.txt", "start": 1, "end": 20}}]},
           open(out, "w"))
 PYEOF
-    printf '#!/bin/sh\nmkdir -p "%s"\ncp "%s/canned-report.json" "%s/jscpd-report.json"\nexit 0\n' \
-        "$out" "$dir" "$out" > "$dir/.stub-bin/jscpd"
+    printf '#!/bin/sh\ncount_file="%s/jscpd-count"\ncount=0\n[ -f "$count_file" ] && count=$(cat "$count_file")\nprintf "%%s" "$((count + 1))" > "$count_file"\nmkdir -p "%s"\ncp "%s/canned-report.json" "%s/jscpd-report.json"\nexit 0\n' \
+        "$dir" "$out" "$dir" "$out" > "$dir/.stub-bin/jscpd"
     chmod +x "$dir/.stub-bin/jscpd"
 }
 
 # A clone in new.txt — a file this delivery added — is the delivery's own.
-d="$(dup_fixture dup-introduced)"; dup_stub "$d" new.txt 1 30
+d="$(dup_fixture dup-introduced)"; printf '[project]\nname = "fixture"\n' > "$d/pyproject.toml"; dup_stub "$d" new.txt 1 30
 expect_exit "introduced duplication blocks the push" pre-push "$d" 1
-expect_says "…and names the offending pair"          pre-push "$d" yes "Introduced by this delivery"
+expect_file_value() { # expect_file_value <name> <path> <want>
+    local name="$1" path="$2" want="$3" actual=""
+    [ -f "$path" ] && actual="$(cat "$path")"
+    if [ "$actual" = "$want" ]; then
+        pass=$((pass + 1))
+    else
+        echo "FAIL: $name — actual='$actual', expected='$want'"
+        fail=1
+    fi
+}
+expect_file_value "common duplication gate ran once" "$d/jscpd-count" 1
+out="$(run_hook pre-push "$d")"
+case "$out" in *"Introduced by this delivery"*) pass=$((pass + 1));; *) echo "FAIL: Python duplication result missing"; fail=1;; esac
 
 # The same-sized clone, entirely inside code the delivery never touched, must not.
 # Blocking here is what makes a team disable the hook on day one.
