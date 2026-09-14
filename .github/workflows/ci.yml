@@ -91,3 +91,17 @@ jobs:
         # The settings merge edits a file holding the operator's permissions and
         # model config; a bad merge destroys work that is not recoverable from git.
         run: bash .github/scripts/test-install.sh
+
+  python-harness:
+    name: python harness — generated runner and bootstrap
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: bootstrap fixture suite
+        run: bash .github/scripts/test-python-harness-bootstrap.sh
+      - name: runner fixture suite
+        env:
+          CI: true
+        run: bash .github/scripts/test-python-harness-runner.sh

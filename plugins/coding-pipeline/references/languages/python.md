@@ -25,12 +25,18 @@ application is implied.
 
 ## Required gates
 
+The generated project-owned `quality_gate.py` is the advanced opt-in runner. It reads explicit
+paths and gate settings from `pyproject.toml` and supports `fast`, `full`, `ci`, and
+`architecture`; its locked execution contract is documented by the Python harness reference.
+Phase 1 generic hooks remain unchanged. The direct gate equivalents are:
+
 ```text
 ruff format --check .
 ruff check .
 mypy .
-pytest --cov --cov-fail-under=85
-pip-audit
+pytest --cov --cov-branch --cov-fail-under=85
+bandit -r .
+pip-audit --local
 ```
 
 The root `pyproject.toml` is the explicit project marker for hook routing. Duplication is the
