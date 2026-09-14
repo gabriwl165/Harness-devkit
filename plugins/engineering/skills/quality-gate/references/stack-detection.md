@@ -5,12 +5,13 @@ Detection command (stop at first match per stack; multi-language monorepos match
 ```bash
 find . -maxdepth 2 -name "go.mod" -o -name "Cargo.toml" -o -name "pom.xml" \
   -o -name "build.gradle" -o -name "package.json" -o -name "composer.json" \
-  -o -name "tsconfig.json" -o -name "pubspec.yaml" 2>/dev/null
+  -o -name "tsconfig.json" -o -name "pubspec.yaml" -o -name "pyproject.toml" 2>/dev/null
 ```
 
 | File | Stack |
 |------|-------|
 | `go.mod` | Go |
+| `pyproject.toml` | Python |
 | `Cargo.toml` | Rust |
 | `pom.xml` / `build.gradle*` | Java |
 | `package.json` + `tsconfig.json` + `next.config.*` | Next.js |

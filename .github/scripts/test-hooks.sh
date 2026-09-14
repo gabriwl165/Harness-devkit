@@ -10,6 +10,12 @@ HOOKS="plugins/coding-pipeline/hooks"
 fail=0
 pass=0
 
+# The standalone stack detector is documented as an executable sensor contract:
+# a Python marker must be discoverable, not merely listed in prose.
+detector="plugins/engineering/skills/quality-gate/references/stack-detection.md"
+grep -q -- '-o -name "pyproject.toml"' "$detector" && pass=$((pass + 1)) || { echo "FAIL: Python marker missing from detector command"; fail=1; }
+grep -q '^| `pyproject.toml` | Python |$' "$detector" && pass=$((pass + 1)) || { echo "FAIL: Python detector mapping missing"; fail=1; }
+
 # expect_out <name> <hook> <json> <expected-exit> <yes|no: warning expected> [env...]
 # delivery-gate signals through stdout, not the exit code — a warn and a clean pass
 # both exit 0. Asserting only the code makes the test survive deleting the logic.
