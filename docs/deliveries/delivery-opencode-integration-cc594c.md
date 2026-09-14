@@ -37,9 +37,9 @@ Status: PR3 implementation complete; parent orchestrator owns validation and PR 
 | OC-09 | Use one explicit override and one default | Explicit destination wins without changing the other default | AC1 | Protects composable test/deployment setups |
 | OC-10 | Skill with nested references | Nested reference files and directories are retained | AC2 | Preserves linked guidance |
 | OC-11 | Existing generated agent and custom agent coexist | Generated agent updates; custom agent remains | AC2/AC3 | Makes regeneration additive |
-| OC-12 | Inspect generated body and description | Source description/body are preserved; `tools`/`model` frontmatter is absent | AC3 | Avoids emitting Claude-only schema |
-| OC-13 | Inspect coder variants | Core occurs once and exactly one overlay occurs in each variant | AC4 | Prevents duplicate or incomplete composition |
-| OC-14 | Inspect PR1 outputs/docs | No permissions field is generated; docs mark permission mapping pending PR2 | AC5 | Keeps sequential PR boundary explicit |
+| OC-12 | Inspect generated body and description | Each generated persona preserves source description/body, while generated frontmatter excludes source `tools`/`model`; coder variants compare core plus their overlay | AC3 | Avoids Claude-only schema drift while preserving prompts |
+| OC-13 | Inspect coder variants | Core occurs once and exactly one matching overlay occurs in each variant; opposite overlay and standalone coder are absent | AC4 | Prevents duplicate or incomplete composition |
+| OC-14 | Integrated release traceability | Generated outputs contain explicit permissions and docs identify the former PR1 no-permission criterion as superseded by OC-15 | AC5 | Makes the PR1→PR2 contract transition auditable |
 
 ## Three-story manifest
 
@@ -50,6 +50,10 @@ Status: PR3 implementation complete; parent orchestrator owns validation and PR 
 PR2 additions use OC-15–OC-18: explicit per-persona permissions; schema-only template; exact thin canonical command wrappers; and additive unmanaged command/config preservation. OC-08–OC-11 remain the original frozen PR1 rows and are executed unchanged by the default suite.
 
 PR3 adds OC-19 for the hermetic CI step and machine-checkable README/AGENTS/adapter guidance claims. The full default suite executes OC-01–OC-19.
+
+Acceptance closure adds a fourth story: OC-12–OC-14 are selectable/default checks. The original OC-14 no-permission criterion was a PR1 boundary criterion satisfied before PR2; at integrated release it is superseded by explicit permission contract OC-15 and is not treated as a current no-permission requirement.
+
+Transition statement: The former PR1 criterion required generated outputs to contain no permission mapping; that criterion was historical and PR1-only, and it is superseded at integrated release by OC-15's explicit permission contract.
 
 ## Falsification evidence
 
