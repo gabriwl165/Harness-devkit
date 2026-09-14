@@ -1,0 +1,19 @@
+# Harness bootstrap metadata: generator=init-python-harness profile=library
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-library"
+version = "0.1.0"
+description = "A framework-neutral Python library."
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 88
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-fail-under=85"

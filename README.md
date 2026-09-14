@@ -270,6 +270,8 @@ bash ~/.claude/git-hooks/install.sh
 
 ### Codex CLI / Other Harnesses
 
+For a minimal framework-neutral Python scaffold, use `plugins/coding-pipeline/scripts/init-python-harness.sh --profile library|service --target <directory>`. The service profile requires an existing root `pyproject.toml`; use `--dry-run` to preview without writing. This PR5 bootstrap does not generate application or framework runtime code.
+
 Every `SKILL.md` in this devkit uses only `name:`/`description:` frontmatter — the same
 shape Codex CLI's own Skills convention expects. A dedicated installer places them where
 Codex scans for skills:
