@@ -3,7 +3,7 @@
 Base: `74e964f`  
 Release branch: `release/opencode-integration-cc594c`  
 Worktree: `.worktrees/dlv-cc594c`  
-Status: PR3 implementation complete; parent orchestrator owns validation and PR sequencing.
+Status: Delivered; acceptance closure complete and all story PRs merged into the release branch.
 
 ## Codebase/reuse map
 
@@ -22,7 +22,7 @@ Status: PR3 implementation complete; parent orchestrator owns validation and PR 
 - AC5: PR2 emits explicit least-privilege `permission` mappings for every generated persona; permissions use only supported OpenCode actions.
 - AC6: Linux/macOS Bash scripts run without dependencies beyond standard shell utilities.
 
-## Frozen test table (complete OC-01–OC-14)
+## Acceptance test table (OC-01–OC-19)
 
 | ID | Input/precondition | Expected observable result | AC | Why it matters |
 |---|---|---|---|---|
