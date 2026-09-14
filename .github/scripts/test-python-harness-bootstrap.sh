@@ -36,9 +36,9 @@ marker_before=$(checksum "$tmp/svc/pyproject.toml")
 sh "$generator" --profile service --target "$tmp/svc" || fail 'service generation'
 [ ! -e "$tmp/svc/pyproject.toml.tmp" ] || fail 'service marker replacement'
 [ -f "$tmp/svc/QUALITY.md" ] && [ -f "$tmp/svc/README.md" ] && [ -f "$tmp/svc/pyproject.toml" ] || fail 'service artifact set'
-[ "$(find "$tmp/svc" -type f | wc -l | tr -d ' ')" = 6 ] || fail 'service artifact count'
+[ "$(find "$tmp/svc" -type f | wc -l | tr -d ' ')" = 10 ] || fail 'service artifact count'
 [ -f "$tmp/lib-a/QUALITY.md" ] && [ -f "$tmp/lib-a/README.md" ] && [ -f "$tmp/lib-a/pyproject.toml" ] || fail 'library artifact set'
-[ "$(find "$tmp/lib-a" -type f | wc -l | tr -d ' ')" = 6 ] || fail 'library artifact count'
+[ "$(find "$tmp/lib-a" -type f | wc -l | tr -d ' ')" = 10 ] || fail 'library artifact count'
 [ ! -e "$tmp/lib-a/service.toml" ] && [ ! -e "$tmp/svc/library.toml" ] || fail 'profile-exclusive artifact'
 [ "$marker_before" = "$(checksum "$tmp/svc/pyproject.toml")" ] || fail 'service marker changed'
 if sh "$generator" --profile service --target "$tmp/service-missing"; then fail 'service marker guard'; fi
@@ -96,7 +96,7 @@ done
 concurrent_failures=0
 for pid in $pids; do wait "$pid" || concurrent_failures=$((concurrent_failures + 1)); done
 [ "$concurrent_failures" -ge 1 ] || fail 'concurrent no-clobber race not observed'
-[ "$(find "$concurrent_target" -type f | wc -l | tr -d ' ')" = 6 ] || fail 'concurrent artifact set'
+[ "$(find "$concurrent_target" -type f | wc -l | tr -d ' ')" = 10 ] || fail 'concurrent artifact set'
 
 metadata_target="$tmp/metadata-check"
 mkdir "$metadata_target"

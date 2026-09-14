@@ -16,9 +16,9 @@ case "/$target/" in */../*|*/..|../*) printf '%s\n' 'error: target must not cont
 [ -d "$target" ] || { printf '%s\n' 'error: target is not a directory' >&2; exit 1; }
 if [ "$profile" = service ]; then
     [ -f "$target/pyproject.toml" ] && [ -r "$target/pyproject.toml" ] && [ ! -L "$target/pyproject.toml" ] || { printf '%s\n' 'error: service profile requires a readable regular pyproject.toml' >&2; exit 1; }
-    files='README.md QUALITY.md quality_gate.py pyproject.harness.toml .github/workflows/python-quality.yml'
+    files='README.md QUALITY.md quality_gate.py governance_validator.py pyproject.harness.toml python-harness-policy.toml agent-controls.md mcp-governance.md .github/workflows/python-quality.yml'
 else
-    files='pyproject.toml README.md QUALITY.md quality_gate.py pyproject.harness.toml .github/workflows/python-quality.yml'
+    files='pyproject.toml README.md QUALITY.md quality_gate.py governance_validator.py pyproject.harness.toml python-harness-policy.toml agent-controls.md mcp-governance.md .github/workflows/python-quality.yml'
 fi
 if [ -f "$target/pyproject.toml" ] && grep -q '^\[tool\.harness\.quality_gate\]' "$target/pyproject.toml"; then
     printf '%s\n' 'error: pyproject.toml already contains Harness quality-gate configuration; merge the deterministic fragment manually' >&2
@@ -27,7 +27,7 @@ fi
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 template_dir=$script_dir/../templates/python-harness/$profile
 for file in $files; do
-    if [ "$file" = quality_gate.py ]; then
+    if [ "$file" = quality_gate.py ] || [ "$file" = governance_validator.py ]; then
         [ -f "$script_dir/../templates/python-harness/library/quality_gate.py" ] || { printf 'error: missing canonical runner template\n' >&2; exit 1; }
     else
         [ -f "$template_dir/$file" ] || { printf 'error: missing template: %s\n' "$file" >&2; exit 1; }
@@ -53,6 +53,7 @@ for file in $files; do
     # The gate has one canonical implementation; profiles differ only in
     # bootstrap policy and project-marker ownership.
     if [ "$file" = quality_gate.py ]; then source_template=$script_dir/../templates/python-harness/library/quality_gate.py; fi
+    if [ "$file" = governance_validator.py ]; then source_template=$script_dir/../templates/python-harness/library/governance_validator.py; fi
     cp "$source_template" "$stage/$file"
 done
 for file in $files; do
