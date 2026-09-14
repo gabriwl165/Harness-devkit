@@ -72,7 +72,7 @@ Explicit list. Prevents scope creep.
 ### Definition of Done
 - All ACs pass; code review approved; QA green; stress ≥ 7/10; no CRITICAL/MAJOR unresolved
 - No OWASP Top 10 violations in security-relevant epics
-- Coverage: Go ≥ 85% · Java ≥ 85% · JS/TS ≥ 85% · PHP ≥ 80% · Rust ≥ 85% · React ≥ 85% · Flutter ≥ 80% · Kotlin ≥ 85%
+- Coverage: Go ≥ 85% · Java ≥ 85% · JS/TS ≥ 85% · Python ≥ 85% · PHP ≥ 80% · Rust ≥ 85% · React ≥ 85% · Flutter ≥ 80% · Kotlin ≥ 85%
 - Each epic delivers a visible, testable change — no "invisible infra only" epics
 
 ### Dependencies

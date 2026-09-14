@@ -35,7 +35,7 @@ Collect all hard gate results from Reviewer and Stress Tester:
 | No hardcoded secret / credential in source | Reviewer | PASS / FAIL |
 | Auth/authz not bypassable without valid credentials | Reviewer | PASS / FAIL |
 | No SQL/command injection via unsanitized input | Reviewer | PASS / FAIL |
-| Coverage threshold met (Go ≥85% · Java ≥85% · JS/TS ≥85% · PHP ≥80% · Rust ≥85%) | Reviewer | PASS / FAIL |
+| Coverage threshold met (Go ≥85% · Java ≥85% · JS/TS ≥85% · Python ≥85% · PHP ≥80% · Rust ≥85%) | Reviewer | PASS / FAIL |
 | Spec-first testing followed — every Test Case row implemented, every test falsified with valid evidence, zero tautologies | Reviewer / QA | PASS / FAIL |
 | All work committed on `release/{slug}-{key}` (or `hotfix/{slug}`), nothing on `main` | Orchestrator | PASS / FAIL |
 | Auth/authz holds under degraded conditions (circuit open, cache miss) | Stress | PASS / FAIL |
@@ -116,5 +116,5 @@ evidence cited is itself a defect — the same tautology rule QA applies to test
 - Security CRITICAL is never eligible for READY WITH CONDITIONS — it is always NOT READY
 - Score gap > 3 between Review and Stress → add a WARNING note in the verdict output recommending manual inspection before shipping; does not change the verdict by itself
 - Verify all PRD ACs are fulfilled — a passing score with unmet ACs = NOT READY
-- Note if language best practices were followed: Uber style (Go) · Spring Security (Java) · `strict_types` (PHP) · TypeScript strict mode (JS/TS) · no-unwrap/thiserror/utoipa (Rust)
+- Note if language best practices were followed: Uber style (Go) · Spring Security (Java) · Python Developer's Guide/PEP 8 and typed boundaries (Python) · `strict_types` (PHP) · TypeScript strict mode (JS/TS) · no-unwrap/thiserror/utoipa (Rust)
 - If Reviewer BLOCKed, overall score is capped at 5.0 regardless of other agent scores

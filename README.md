@@ -837,6 +837,10 @@ or with focus area:
 - `strict: true` in tsconfig; no `any` on public API or HTTP boundaries
 - zod/joi validation at every HTTP boundary before processing request data
 
+### Python
+- Framework-neutral backend guidance; root `pyproject.toml` is the Python project marker
+- Ruff format/check, mypy, pytest-cov with an 85% floor, and pip-audit are enforced by the hooks
+
 ### React
 - Functional components + hooks only; `eslint-plugin-react-hooks` zero violations
 - `eslint-plugin-jsx-a11y` zero warnings; semantic HTML; no div-soup
@@ -861,15 +865,15 @@ Spec is the source of truth — code follows spec, never the reverse.
 
 ### Quality Gates
 
-| Gate | Go | TypeScript | React | Flutter | Kotlin |
-|------|-----|------|-------|---------|--------|
-| Format | `gofmt` | `prettier --check` | `prettier --check` | `dart format` | `ktlint` |
-| Lint | `go vet` + `golangci-lint` (0) | `eslint --max-warnings 0` | `eslint` (react-hooks + a11y) | `flutter analyze` | `detekt` + `ktlint` |
-| Types | — | `tsc --noEmit` | `tsc --noEmit` | — | — |
-| Coverage | ≥ 85% | ≥ 85% | ≥ 85% | ≥ 80% | ≥ 85% |
-| Race | `go test -race` | — | — | — | — |
-| Vuln | `govulncheck` | `npm audit` | `npm audit` | — | — |
-| Spec lint | `spectral lint` | `spectral lint` | — | — | — |
+| Gate | Go | TypeScript | Python | React | Flutter | Kotlin |
+|------|-----|------------|--------|--------|---------|--------|
+| Format | `gofmt` | `prettier --check` | `ruff format --check .` | `prettier --check` | `dart format` | `ktlint` |
+| Lint | `go vet` + `golangci-lint` (0) | `eslint --max-warnings 0` | `ruff check .` | `eslint` (react-hooks + a11y) | `flutter analyze` | `detekt` + `ktlint` |
+| Types | — | `tsc --noEmit` | `mypy .` | `tsc --noEmit` | — | — |
+| Coverage | ≥ 85% | ≥ 85% | ≥ 85% | ≥ 85% | ≥ 80% | ≥ 85% |
+| Race | `go test -race` | — | — | — | — | — |
+| Vuln | `govulncheck` | `npm audit` | `pip-audit` | `npm audit` | — | — |
+| Spec lint | `spectral lint` | `spectral lint` | — | — | — | — |
 
 ### Security
 - OWASP Web Top 10 (2025) enforced at Reviewer + Verdict stages
@@ -917,8 +921,8 @@ rather than the mistake.
 
 | Hook | Runs | Checks |
 |------|------|--------|
-| `pre-commit` | Every commit (fast, < 5s) | Go: `gofmt` + `go vet` + `golangci-lint --fast` · TS: `tsc --noEmit` + `eslint` |
-| `pre-push` | Before push (full gates) | Go: `go test -race` + coverage ≥ 85% + `govulncheck` · TS: `jest --coverage` + `npm audit` |
+| `pre-commit` | Every commit (fast, < 5s) | Go: `gofmt` + `go vet` + `golangci-lint --fast` · TS: `tsc --noEmit` + `eslint` · Python: Ruff format/check + mypy |
+| `pre-push` | Before push (full gates) | Go: `go test -race` + coverage ≥ 85% + `govulncheck` · TS: `jest --coverage` + `npm audit` · Python: pytest-cov ≥ 85% + pip-audit |
 | `commit-msg` | Every commit | Conventional Commits: `type(scope): description` |
 
 Valid types: `feat` · `fix` · `docs` · `style` · `refactor` · `perf` · `test` · `chore` · `build` · `ci` · `revert`

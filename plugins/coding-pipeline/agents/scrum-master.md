@@ -90,8 +90,8 @@ the vagueness here — go back to architecture if needed — before marking the 
 - [ ] No tautological tests — no assertion on a literal just set, no mock-call-only assertion, no test whose subject is mocked away
 - [ ] Unit tests for every exported function / public method
 - [ ] Security ACs verified — no OWASP Top 10 violations in scope
-- [ ] Lint clean (zero errors): Go — `go vet`, `staticcheck`, `golangci-lint`; Java — `checkstyle`, `SpotBugs`, `PMD`; JS/TS — `eslint --max-warnings 0`, `prettier --check`; PHP — `phpstan` level 8, `phpcs`, `php-cs-fixer`; Rust — `cargo clippy -D warnings`, `cargo fmt --check`, `cargo audit`
-- [ ] Coverage: Go ≥ 85% · Java ≥ 85% · JS/TS ≥ 85% · PHP ≥ 80% · Rust ≥ 85% · React ≥ 85% · Flutter ≥ 80% · Kotlin ≥ 85%
+- [ ] Lint clean (zero errors): Go — `go vet`, `staticcheck`, `golangci-lint`; Java — `checkstyle`, `SpotBugs`, `PMD`; JS/TS — `eslint --max-warnings 0`, `prettier --check`; Python — `ruff format --check .`, `ruff check .`, `mypy .`; PHP — `phpstan` level 8, `phpcs`, `php-cs-fixer`; Rust — `cargo clippy -D warnings`, `cargo fmt --check`, `cargo audit`
+- [ ] Coverage: Go ≥ 85% · Java ≥ 85% · JS/TS ≥ 85% · Python ≥ 85% · PHP ≥ 80% · Rust ≥ 85% · React ≥ 85% · Flutter ≥ 80% · Kotlin ≥ 85%
 - [ ] Duplication ≤ 3% (`jscpd --threshold 3`) and every Reuse row honoured — nothing in this story reimplements a symbol the Reuse section named
 - [ ] Error logging only: no `info`/`debug`/`warn` in production paths; every error log includes `request_id`/`trace_id`; no PII, secrets, or card data in any log line
 - [ ] Idempotency keys implemented where required: outbound mutation to external service · token renewal/refresh call · payment handler; duplicate key replays stored result without re-executing side effect
