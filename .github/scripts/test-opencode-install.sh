@@ -131,7 +131,7 @@ oc_05_persona_coverage() {
         assert_contains "$TMP/config/agents/$name.md" 'mode: subagent'
     done
 }
-oc_06_coder_composition() {
+assert_coder_composition() {
     assert_contains "$TMP/config/agents/coder-backend.md" 'This file is the **shared Coder core**'
     assert_contains "$TMP/config/agents/coder-backend.md" 'Coder overlay — Backend'
     assert_contains "$TMP/config/agents/coder-frontend.md" 'This file is the **shared Coder core**'
@@ -144,11 +144,56 @@ oc_06_coder_composition() {
     [ "$(grep -cF 'Coder overlay — Backend' "$TMP/config/agents/coder-frontend.md" || true)" -eq 0 ]
     [ ! -e "$TMP/config/agents/coder.md" ]
 }
+oc_06_coder_composition() { assert_coder_composition; }
 oc_07_parseability() {
     for file in "$TMP/config/agents"/*.md; do
         [ "$(basename "$file")" = custom.md ] && continue
         assert_frontmatter "$file"
     done
+}
+oc_12_source_correspondence() {
+    python3 - "$ROOT/plugins/coding-pipeline/agents" "$TMP/config/agents" <<'PY'
+import sys
+from pathlib import Path
+source_root, generated_root = map(Path, sys.argv[1:])
+personas = ['analyst','architect','bug-investigator','devops','plan-reviewer','pm','qa','reviewer','rote-adapter','rote-analytics','rote-datadog','rote-github','scrum-master','stress','tuner','verdict']
+def parts(path):
+    lines = path.read_text().splitlines()
+    assert lines[0] == '---'
+    end = lines.index('---', 1)
+    front = lines[1:end]
+    body = '\n'.join(lines[end + 1:]).strip()
+    fields = {line.split(':', 1)[0]: line.split(':', 1)[1].strip() for line in front if ':' in line and not line.startswith('  ')}
+    return fields, body, front
+for name in personas:
+    source, source_body, _ = parts(source_root / f'{name}.md')
+    generated, generated_body, generated_front = parts(generated_root / f'{name}.md')
+    assert generated['description'] == source['description'], name
+    assert generated_body == source_body, name
+    assert not any(line.startswith(('tools:', 'model:')) for line in generated_front), name
+for name, overlay in [('coder-backend', 'coder-backend'), ('coder-frontend', 'coder-frontend')]:
+    core, core_body, _ = parts(source_root / 'coder.md')
+    _, overlay_body, _ = parts(source_root / f'{overlay}.md')
+    generated, generated_body, generated_front = parts(generated_root / f'{name}.md')
+    assert generated['description'] == core['description'], name
+    assert core_body in generated_body and overlay_body in generated_body, name
+    assert not any(line.startswith(('tools:', 'model:')) for line in generated_front), name
+PY
+}
+oc_13_coder_composition() { assert_coder_composition; }
+oc_14_release_traceability() {
+    python3 - "$TMP/config/agents" "$ROOT/docs/deliveries/delivery-opencode-integration-cc594c.md" <<'PY'
+import sys
+from pathlib import Path
+agents, delivery = Path(sys.argv[1]), Path(sys.argv[2])
+files = sorted(path for path in agents.glob('*.md') if path.name != 'custom.md')
+assert len(files) == 18, len(files)
+for path in files:
+    assert '\npermission:\n' in path.read_text(), path.name
+text = delivery.read_text()
+transition = 'Transition statement: The former PR1 criterion required generated outputs to contain no permission mapping; that criterion was historical and PR1-only, and it is superseded at integrated release by OC-15\'s explicit permission contract.'
+assert transition in text
+PY
 }
 oc_08_locations_default() {
     home="$TMP/home"
@@ -248,7 +293,7 @@ oc_19_ci_docs_contract() {
 
 selected="${1:-all}"
 case "$selected" in
-    all) oc_01_locations; oc_02_exclusions; oc_03_preservation; oc_04_idempotency; oc_05_persona_coverage; oc_06_coder_composition; oc_07_parseability; oc_08_locations_default; oc_09_locations_override; oc_10_nested_references; oc_11_custom_agent; oc_15_permission_contract; oc_16_config_contract; oc_17_command_contract; oc_18_additive_files; oc_19_ci_docs_contract ;;
+    all) oc_01_locations; oc_02_exclusions; oc_03_preservation; oc_04_idempotency; oc_05_persona_coverage; oc_06_coder_composition; oc_07_parseability; oc_08_locations_default; oc_09_locations_override; oc_10_nested_references; oc_11_custom_agent; oc_12_source_correspondence; oc_13_coder_composition; oc_14_release_traceability; oc_15_permission_contract; oc_16_config_contract; oc_17_command_contract; oc_18_additive_files; oc_19_ci_docs_contract ;;
     OC-01) oc_01_locations ;;
     OC-02) install_fixture; oc_02_exclusions ;;
     OC-03) install_fixture; oc_03_preservation ;;
@@ -260,11 +305,14 @@ case "$selected" in
     OC-09) oc_09_locations_override ;;
     OC-10) oc_10_nested_references ;;
     OC-11) oc_11_custom_agent ;;
+    OC-12) install_fixture; oc_12_source_correspondence ;;
+    OC-13) install_fixture; oc_13_coder_composition ;;
+    OC-14) install_fixture; oc_14_release_traceability ;;
     OC-15) install_fixture; oc_15_permission_contract ;;
     OC-16) install_fixture; oc_16_config_contract ;;
     OC-17) install_fixture; oc_17_command_contract ;;
     OC-18) install_fixture; oc_18_additive_files ;;
     OC-19) oc_19_ci_docs_contract ;;
-    *) printf 'Usage: %s [OC-01..OC-11|OC-15..OC-19]\n' "$0" >&2; exit 2 ;;
+    *) printf 'Usage: %s [OC-01..OC-19]\n' "$0" >&2; exit 2 ;;
 esac
 printf 'OC-01–OC-19 passed\n'
