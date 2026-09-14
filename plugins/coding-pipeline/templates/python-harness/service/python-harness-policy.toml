@@ -1,0 +1,14 @@
+profile = "service"
+owner = "REPLACE_WITH_PROJECT_OWNER"
+allowed_write_paths = ["src", "tests"]
+required_quality_command = "python quality_gate.py ci"
+
+[review]
+required = true
+
+[falsification]
+required = true
+
+[mcp]
+enabled = false
+allowlist = []

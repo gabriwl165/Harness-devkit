@@ -10,6 +10,8 @@ make_project() {
     d=$1; mkdir -p "$d/src" "$d/tests" "$d/bin"
     printf 'x\n' > "$d/src/module.py"; printf 'x\n' > "$d/tests/test_module.py"; : > "$d/uv.lock"
     sh "$generator" --profile library --target "$d" >/dev/null
+    sed 's/REPLACE_WITH_PROJECT_OWNER/fixture-owner/' "$d/python-harness-policy.toml" > "$d/policy.tmp"
+    mv "$d/policy.tmp" "$d/python-harness-policy.toml"
 }
 make_uv() {
     d=$1

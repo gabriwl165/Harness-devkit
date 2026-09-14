@@ -155,7 +155,10 @@ recorded as created by this invocation, rolling back earlier files if a later cr
 **Freeze date:** 2026-09-14  
 **Status:** frozen before implementation  
 **Validation owner:** parent orchestrator  
-**Evidence:** pending implementation, post-implementation tests, and mutation-based falsification.
+**Evidence:** `.github/scripts/test-python-harness-governance.sh` covers both profiles, validator
+rejections, and full/ci fail-fast ordering. Literal policy mutations were applied one at a time,
+each produced a non-zero validator result with a diagnostic, and each was restored. The companion
+runner/bootstrap suites cover frozen fast/architecture behavior and generation boundaries.
 
 ### Scope and non-goals
 
@@ -266,3 +269,95 @@ Runner, bootstrap, Phase1 hooks, `py_compile`, `bash -n`, ShellCheck, wiring val
 `git diff --check` passed. Workflow syntax is represented by the repository's existing YAML
 workflow structure; no dedicated workflow validator is installed locally. Exceptional Oracle
 focused review is authorized by the user.
+
+## PR7 specification: Python harness governance reference
+
+**Oracle plan:** ora-2  
+**Scope:** PR7 only  
+**Freeze date:** 2026-09-14  
+**Status:** frozen before implementation  
+**Validation owner:** parent orchestrator  
+**Implementation/tests/falsification:** follow the frozen contract below  
+**Evidence:** pending implementation, post-implementation tests, and mutation-based falsification.
+
+### Scope and non-goals
+
+PR7 extends the generated Python Harness reference with project-owned governance artifacts. Both
+`library` and `service` profiles receive deterministic tracked files:
+
+```text
+python-harness-policy.toml
+agent-controls.md
+mcp-governance.md
+```
+
+The policy records the exact profile, owner, allowed write paths, required quality command, review
+requirements, falsification requirements, and MCP allowlist. Each MCP entry has a unique ID, owner,
+approval, data classification, and timeout. Documentation states that no MCP server is configured
+or enabled by default and that local host controls are documented integration points only.
+
+PR7 adds a standard-library-only structural validator template, invoked by the generated project
+quality runner in `full` and `ci` before quality gates. It validates structure only and does not
+enforce runtime permissions.
+
+This PR does **not** configure or enable an MCP server, generate an endpoint, secret, OAuth
+configuration, `.claude/settings.local.json`, host permission files, Docker or service behavior, or
+claim runtime permission enforcement. No credentials or plaintext endpoint credentials are
+generated. There is no dependency installation, network access, or invented local host control.
+
+### Acceptance criteria
+
+- **AC-PR7-1 Tracked artifacts:** Both profiles generate deterministic, project-owned policy and
+  both governance documents, without machine-specific paths.
+- **AC-PR7-2 Complete policy:** Policy contains exact profile, owner, allowed write paths, required
+  quality command, review/falsification requirements, and MCP entries with unique IDs, owner,
+  approval, data classification, and valid timeouts.
+- **AC-PR7-3 Profile parity:** Each profile's policy profile value exactly matches `library` or
+  `service`; neither emits an unknown or mismatched profile.
+- **AC-PR7-4 Secure default:** No MCP server is configured/enabled by default; no credentials,
+  plaintext endpoint credentials, secret, OAuth, endpoint, `.claude/settings.local.json`, or host
+  permission file is generated.
+- **AC-PR7-5 Integration boundary:** Documents describe local host controls as integration points
+  only and do not claim generated runtime enforcement.
+- **AC-PR7-6 Structural validator:** Standard-library validation rejects unknown profile, missing
+  owner, duplicate MCP IDs, credential-like values, plaintext endpoint credentials, and invalid
+  timeout; valid generated policies pass.
+- **AC-PR7-7 Ordering:** `full` and `ci` invoke validation before quality gates, with no Docker,
+  service, network, or runtime permission behavior.
+- **AC-PR7-8 Deterministic boundary:** Generation is deterministic, does not edit consumer project
+  configuration in place, and emits no PR8 or application/runtime behavior.
+
+### Frozen test table
+
+Assertions cross the generated project boundary and inspect observable files or recorded runner
+arguments. Each mutation is applied alone, must fail the named assertion, and is restored. No
+Docker or service behavior is tested.
+
+| ID / test | Preconditions | Observable result | Why it matters | AC | Falsified by |
+|---|---|---|---|---|---|
+| **P2-09 governance artifacts and structural policy** | Bootstrap isolated library and service projects through the public profile interface; inspect outputs and run the standard-library validator. | Both profiles contain all three tracked artifacts; exact profile, owner, write paths, quality/review/falsification fields, unique MCP IDs, metadata, and valid timeouts are present; valid policies pass; no default MCP or forbidden endpoint/secret/OAuth/settings/host-control artifact or credential-like value exists. | Governance must be reviewable, profile-correct, and safe by default without pretending documentation is runtime enforcement. | AC-PR7-1 through AC-PR7-6, AC-PR7-8 | Remove an artifact/field, mismatch a profile, duplicate an ID, add a credential-like value/plaintext endpoint credential/invalid timeout, or generate a default server/settings/host-permission file; inventory, validator, or forbidden-artifact assertions fail. |
+| **P2-10 validator integration and rejection ordering** | Use recording quality-gate fixtures with valid policy and mutations for unknown profile, missing owner, duplicate ID, credential-like value, plaintext endpoint credential, and invalid timeout; invoke `full` and `ci`. | Both modes invoke the standard-library validator before any quality gate; valid runs reach the frozen PR6 gates, invalid policies exit non-zero with no later gate, and validation invokes no network, Docker, service, or runtime permission machinery. | CI/full must validate governance before trusting quality results while remaining deterministic and bounded. | AC-PR7-6 through AC-PR7-8 | Remove or move the validator call, allow one invalid case, continue after failure, or replace it with network/service behavior; order, status, and no-later-gate assertions fail. |
+
+### Evidence record
+
+Evidence recorded by the validation owner: `bash .github/scripts/test-python-harness-governance.sh`
+passed P2-09/P2-10. Its mutation cases rejected unknown profile, unresolved owner, duplicate ID,
+missing MCP metadata, nonpositive timeout, credential-like key, URL userinfo, absolute path, and
+traversal path; each failure was observed by non-zero status plus non-empty diagnostic before
+restoration. The ordering fixture rejected invalid policies in both `full` and `ci` with an empty
+recorded `uv` log, proving no later gate ran. Each `full`/`ci` ordering case also used missing,
+symlinked, and directory/unreadable lock paths; governance diagnostics and status 2 won before
+lock diagnostics. Generated-tree inventory covered forbidden filenames, credential-like
+assignments, endpoint-key assignments, non-HTTP schemes, URL userinfo, literal endpoints, and
+explicit documentation boundary claims without rejecting explanatory prose. Runner integration
+parameterized every malformed policy class across both `full` and `ci`, with missing-lock cases
+and additional symlink/nonregular-lock cases proving governance precedence. `test-python-harness-runner.sh` and
+`test-python-harness-bootstrap.sh` passed; no live credentials or endpoint values were used. The
+ordering assertion was deliberately inverted and the governance suite failed; the generated-tree
+documentation assertion was deliberately removed and the suite failed; both mutations were
+restored before the passing run. Additional inventory mutations for uppercase `OAUTH`/`SECRETS`,
+host-control filenames, `mcp://`, and endpoint assignment fixtures were observed failing before
+restoration. The runner integration assertion was also inverted and the suite failed before
+restoration. The former duplicated policy-mutation setup is now shared through
+`make_service_fixture`/`mutate_policy`; scoped jscpd reports 0.00% duplication for the governance
+script.

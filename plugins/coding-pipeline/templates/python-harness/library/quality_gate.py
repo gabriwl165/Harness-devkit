@@ -84,6 +84,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=("fast", "full", "ci", "architecture"))
     args = parser.parse_args()
+    if args.mode in ("full", "ci"):
+        # Governance is the trust boundary for the extended gates. Keep it ahead
+        # of project configuration and lock inspection so invalid policy wins
+        # deterministically, without changing PR6 fast/architecture ordering.
+        run([sys.executable, str(ROOT / "governance_validator.py")])
     source, tests, threshold, _lockfile, architecture = load_config()
     run(["uv", "lock", "--check"])
     if args.mode == "architecture":

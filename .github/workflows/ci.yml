@@ -105,3 +105,5 @@ jobs:
         env:
           CI: true
         run: bash .github/scripts/test-python-harness-runner.sh
+      - name: governance fixture suite
+        run: bash .github/scripts/test-python-harness-governance.sh
